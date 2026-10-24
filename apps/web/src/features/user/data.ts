@@ -100,6 +100,17 @@ export const getUserHasPassword = async (userId: string) => {
   return !!account;
 };
 
+export const getUserHasOidcIdentity = async (userId: string) => {
+  const account = await prisma.account.findFirst({
+    where: {
+      userId,
+      provider: "oidc",
+    },
+    select: { id: true },
+  });
+  return !!account;
+};
+
 export const getUserHasNoAccounts = async (userId: string) => {
   const accountCount = await prisma.account.count({
     where: {

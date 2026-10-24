@@ -92,6 +92,10 @@ An SMTP server is required to send magic-link sign-in emails and notifications.
   <Note>Available from v4.4.0 and later.</Note>
 </ParamField>
 
+<ParamField path="REQUIRE_OIDC_TO_VOTE" default="false">
+  Set to `true` to refuse responses that are not backed by an OIDC identity. Guests and accounts that never signed in through your OIDC provider cannot vote, and each response is linked to the participant's account with the name and email from the identity provider. Requires the OIDC variables below to be set; without them nobody can vote. Responses that already exist stay visible, but their votes can no longer be changed without an OIDC login.
+</ParamField>
+
 <ParamField path="ALLOWED_EMAILS">
   Comma-separated list of email addresses allowed to register and sign in. Wildcards are supported. Example: `*@example.com` allows any address on that domain.
 </ParamField>

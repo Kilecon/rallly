@@ -8,6 +8,7 @@ import { Effect } from "effect";
 import { after } from "next/server";
 import { getInstanceBranding, getSpaceBranding } from "@/emails/branding";
 import { env } from "@/env";
+import { getInstancePolicy } from "@/features/instance-policy/data";
 import { resolveSpaceTier } from "@/features/billing/utils";
 import { chargeEmailBudget } from "@/features/email-budget/mutations";
 import { EmailBudgetStore } from "@/features/email-budget/service";
@@ -31,6 +32,7 @@ import {
   renameParticipantSchema,
   updateParticipantVotesSchema,
 } from "@/features/poll/participant/schema";
+import { getUserHasOidcIdentity } from "@/features/user/data";
 import { getLocale } from "@/i18n/server/get-locale";
 import { runtime } from "@/lib/effect/runtime";
 import { AppError } from "@/lib/errors/app-error";
@@ -53,6 +55,14 @@ const logger = createLogger("participants");
 const pollResponseGuard = createRateLimitGuard(200, "1 h");
 
 type Actor = { id: string; isGuest: boolean };
+
+async function isOidcIdentityMissing(user: Actor | null) {
+  if (!(await getInstancePolicy()).votingRequiresOidc) {
+    return false;
+  }
+
+  return !user || user.isGuest || !(await getUserHasOidcIdentity(user.id));
+}
 
 /**
  * Proves the caller may edit a response. Two proofs are accepted: the token
@@ -192,11 +202,19 @@ export const addParticipantAction = anyUserActionClient
   .use(createRateLimitMiddleware({ requests: 60, duration: "1 m", by: "ip" }))
   .inputSchema(addParticipantSchema)
   .action(async ({ ctx, parsedInput }) => {
-    const { pollId, votes, name, email, note, timeZone, token } = parsedInput;
+    const { pollId, votes, note, timeZone, token } = parsedInput;
 
     ctx.event.pollId = pollId;
     await pollResponseGuard(`add_participant:poll:${pollId}`, ctx.event);
     const locale = await getLocale();
+
+    if (await isOidcIdentityMissing(ctx.user)) {
+      return { ok: false as const, reason: "loginRequired" as const };
+    }
+
+    const { votingRequiresOidc } = await getInstancePolicy();
+    const name = votingRequiresOidc ? ctx.user.name : parsedInput.name;
+    const email = votingRequiresOidc ? ctx.user.email : parsedInput.email;
 
     const result = await addParticipant({
       pollId,
@@ -304,6 +322,10 @@ export const updateParticipantVotesAction = optionalUserActionClient
   .inputSchema(updateParticipantVotesSchema)
   .action(async ({ ctx, parsedInput }) => {
     const { participantId, votes, token } = parsedInput;
+
+    if (await isOidcIdentityMissing(ctx.user)) {
+      return { ok: false as const, reason: "loginRequired" as const };
+    }
 
     const authorization = await authorizeParticipantEdit({
       participantId,

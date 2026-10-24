@@ -11,4 +11,5 @@ export type InstancePolicy = {
   spaceBrandingAllowed: boolean;
   // Attribution removal is a per-space setting rather than instance wide
   spaceAttributionConfigurable: boolean;
+  votingRequiresOidc: boolean;
 };
