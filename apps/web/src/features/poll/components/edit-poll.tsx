@@ -90,6 +90,7 @@ function getDefaultValues(poll: PollDetails): NewEventData {
     duration: poll.options[0]?.duration || 60,
     hideParticipants: poll.hideParticipants,
     hideScores: poll.hideScores,
+    anonymousResponses: poll.anonymousResponses,
     enableComments: !poll.disableComments,
     allowTentativeVotes: poll.allowTentativeVotes,
     requireParticipantEmail: poll.requireParticipantEmail,
@@ -163,6 +164,7 @@ const detailFields = [
 const settingFields = [
   "hideParticipants",
   "hideScores",
+  "anonymousResponses",
   "enableComments",
   "allowTentativeVotes",
   "requireParticipantEmail",
@@ -231,6 +233,7 @@ export function EditPoll({
     if (settingsChanged) {
       input.hideParticipants = data.hideParticipants;
       input.hideScores = data.hideScores;
+      input.anonymousResponses = data.anonymousResponses;
       input.disableComments = !data.enableComments;
       input.allowTentativeVotes = data.allowTentativeVotes;
       input.requireParticipantEmail = data.requireParticipantEmail;
@@ -296,7 +299,10 @@ export function EditPoll({
           </CardContent>
         </Card>
         <PollOptionsForm disableTimeZoneChange={hasVotes} />
-        <PollSettingsForm hasTentativeVotes={hasTentativeVotes} />
+        <PollSettingsForm
+          hasTentativeVotes={hasTentativeVotes}
+          hasResponses={participants.length > 0}
+        />
         <div className="sticky bottom-0 z-20 flex justify-center pt-2 pb-6">
           <div className="flex w-full max-w-md items-center justify-between gap-x-4 rounded-full border border-popover-border bg-popover py-2 pr-2 pl-5 shadow-2xl shadow-black/40">
             <p className="min-w-0 truncate text-muted-foreground text-sm">

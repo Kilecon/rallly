@@ -117,12 +117,30 @@ export async function listWebhookActivities({
     where: {
       type: { in: WEBHOOK_ACTIVITY_TYPES },
       createdAt: { lte: until },
-      OR: after.id
-        ? [
-            { createdAt: { gt: after.createdAt } },
-            { createdAt: after.createdAt, id: { gt: after.id } },
-          ]
-        : [{ createdAt: { gt: after.createdAt } }],
+      AND: [
+        {
+          OR: after.id
+            ? [
+                { createdAt: { gt: after.createdAt } },
+                { createdAt: after.createdAt, id: { gt: after.id } },
+              ]
+            : [{ createdAt: { gt: after.createdAt } }],
+        },
+        {
+          OR: [
+            {
+              type: {
+                notIn: [
+                  "response_created",
+                  "response_updated",
+                  "response_deleted",
+                ],
+              },
+            },
+            { poll: { anonymousResponses: false } },
+          ],
+        },
+      ],
       poll: { spaceId },
     },
     select: {

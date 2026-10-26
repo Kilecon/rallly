@@ -15,6 +15,7 @@ export type PollDetails = {
   status: PollStatus;
   closedReason: PollClosedReason | null;
   hideParticipants: boolean;
+  anonymousResponses: boolean;
   disableComments: boolean;
   allowTentativeVotes: boolean;
   hideScores: boolean;

@@ -55,6 +55,7 @@ export function PollResponseDetail({
   kind,
   timeZone,
   response,
+  anonymousResponses,
   options,
   activity,
 }: {
@@ -69,9 +70,10 @@ export function PollResponseDetail({
     note: string | null;
     image: string | null;
     createdAt: Date;
-    editUrl: string;
+    editUrl: string | null;
     votes: { optionId: string; type: VoteType }[];
   };
+  anonymousResponses: boolean;
   options: { id: string; startTime: Date; duration: number }[];
   activity: React.ReactNode;
 }) {
@@ -115,16 +117,18 @@ export function PollResponseDetail({
         />
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-semibold text-base">{response.name}</h2>
-          <p className="truncate text-muted-foreground text-sm">
-            {response.email || (
-              <i>
-                <Trans
-                  i18nKey="pollResponseDetailNoEmail"
-                  defaults="No email provided"
-                />
-              </i>
-            )}
-          </p>
+          {anonymousResponses ? null : (
+            <p className="truncate text-muted-foreground text-sm">
+              {response.email || (
+                <i>
+                  <Trans
+                    i18nKey="pollResponseDetailNoEmail"
+                    defaults="No email provided"
+                  />
+                </i>
+              )}
+            </p>
+          )}
         </div>
         <PollResponseActions
           participantId={response.id}
@@ -159,12 +163,14 @@ export function PollResponseDetail({
           className="-mx-4 py-0"
         />
       </section>
-      <section className="space-y-2">
-        <h3 className="font-medium text-sm">
-          <Trans i18nKey="pollResponseDetailActivity" defaults="Activity" />
-        </h3>
-        {activity}
-      </section>
+      {anonymousResponses ? null : (
+        <section className="space-y-2">
+          <h3 className="font-medium text-sm">
+            <Trans i18nKey="pollResponseDetailActivity" defaults="Activity" />
+          </h3>
+          {activity}
+        </section>
+      )}
     </PollResponseDetailCard>
   );
 }

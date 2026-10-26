@@ -3,6 +3,7 @@ import {
   filterCommentsForViewer,
   filterParticipantsByVote,
   getFinalizePlanGate,
+  maskParticipantsForPollCreator,
   maskParticipantsForViewer,
   rankOptionsByPopularity,
   summarizeNotifySelection,
@@ -80,6 +81,46 @@ describe("maskParticipantsForViewer", () => {
       hidden: true,
     });
     expect(result[1].votes).toEqual([{ optionId: "opt-1", type: "yes" }]);
+  });
+});
+
+describe("maskParticipantsForPollCreator", () => {
+  it("removes identity, notes, edit links, and response timing", () => {
+    const result = maskParticipantsForPollCreator(
+      [
+        {
+          ...participant("a", { userId: "user-1" }),
+          hidden: false,
+          editUrl: "https://example.com/edit",
+        },
+      ],
+      true,
+      "Anonymous response",
+    );
+
+    expect(result[0]).toMatchObject({
+      name: "Anonymous response",
+      email: null,
+      userId: null,
+      note: null,
+      image: null,
+      hidden: false,
+      editUrl: null,
+      createdAt: new Date(0),
+    });
+    expect(result[0].votes).toEqual([{ optionId: "opt-1", type: "yes" }]);
+  });
+
+  it("leaves responses unchanged when anonymity is off", () => {
+    const rows = [
+      {
+        ...participant("a"),
+        hidden: false,
+        editUrl: "https://example.com/edit",
+      },
+    ];
+
+    expect(maskParticipantsForPollCreator(rows, false, "Anonymous")).toBe(rows);
   });
 });
 

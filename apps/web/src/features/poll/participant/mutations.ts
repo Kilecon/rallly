@@ -111,6 +111,7 @@ export type AddParticipantResult =
       poll: {
         id: string;
         title: string;
+        anonymousResponses: boolean;
         allowTentativeVotes: boolean;
         space: {
           id: string;
@@ -215,6 +216,7 @@ export async function addParticipant({
             select: {
               id: true,
               title: true,
+              anonymousResponses: true,
               allowTentativeVotes: true,
               space: {
                 select: {

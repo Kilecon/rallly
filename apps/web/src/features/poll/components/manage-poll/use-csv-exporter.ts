@@ -17,9 +17,17 @@ export const useCsvExporter = () => {
       // correct for rows on either side of a DST change.
       const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const header = [
-        t("name"),
-        t("email"),
-        `${t("respondedOn", { defaultValue: "Responded on" })} (${timeZone})`,
+        ...(poll.anonymousResponses
+          ? [
+              t("anonymousResponseLabel", {
+                defaultValue: "Anonymous response",
+              }),
+            ]
+          : [
+              t("name"),
+              t("email"),
+              `${t("respondedOn", { defaultValue: "Responded on" })} (${timeZone})`,
+            ]),
         ...options.map((decodedOption) => {
           const day = `${decodedOption.dow} ${decodedOption.day} ${decodedOption.month} ${decodedOption.year}`;
           return decodedOption.type === "date"
@@ -29,9 +37,13 @@ export const useCsvExporter = () => {
       ].join(",");
       const rows = participants.map((participant) => {
         return [
-          participant.name,
-          participant.email,
-          dayjs(participant.createdAt).format("YYYY-MM-DD HH:mm:ss"),
+          ...(poll.anonymousResponses
+            ? [participant.name]
+            : [
+                participant.name,
+                participant.email,
+                dayjs(participant.createdAt).format("YYYY-MM-DD HH:mm:ss"),
+              ]),
           ...poll.options.map((option) => {
             const vote = participant.votes.find((vote) => {
               return vote.optionId === option.id;

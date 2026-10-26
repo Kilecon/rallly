@@ -9,6 +9,7 @@ const prior = {
   timeZone: "Europe/London",
   hideParticipants: false,
   hideScores: false,
+  anonymousResponses: false,
   disableComments: false,
   allowTentativeVotes: true,
   requireParticipantEmail: false,
@@ -78,6 +79,7 @@ describe("getPollChanges", () => {
           ...unchanged,
           hideParticipants: true,
           hideScores: true,
+          anonymousResponses: true,
           disableComments: true,
           requireParticipantEmail: true,
         },
@@ -85,6 +87,7 @@ describe("getPollChanges", () => {
     ).toEqual([
       { field: "hideParticipants", from: false },
       { field: "hideScores", from: false },
+      { field: "anonymousResponses", from: false },
       { field: "disableComments", from: false },
       { field: "requireParticipantEmail", from: false },
     ]);
@@ -114,6 +117,7 @@ describe("getPollChanges", () => {
           ...unchanged,
           hideParticipants: false,
           hideScores: false,
+          anonymousResponses: false,
           disableComments: false,
           allowTentativeVotes: true,
           requireParticipantEmail: false,

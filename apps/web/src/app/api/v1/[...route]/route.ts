@@ -113,6 +113,7 @@ function toPollResponseBody(poll: {
   requireParticipantEmail: boolean;
   hideParticipants: boolean;
   hideScores: boolean;
+  anonymousResponses: boolean;
   disableComments: boolean;
   allowTentativeVotes: boolean;
   participantCount: number;
@@ -147,6 +148,7 @@ function toPollResponseBody(poll: {
       requireEmail: poll.requireParticipantEmail,
       hideParticipants: poll.hideParticipants,
       hideScores: poll.hideScores,
+      anonymousResponses: poll.anonymousResponses,
       disableComments: poll.disableComments,
       allowTentativeVotes: poll.allowTentativeVotes,
       participantCount: poll.participantCount,
@@ -578,6 +580,7 @@ app.post(
             requireParticipantEmail: input.requireEmail,
             hideParticipants: input.hideParticipants,
             hideScores: input.hideScores,
+            anonymousResponses: input.anonymousResponses,
             disableComments: poll.disableComments,
             allowTentativeVotes: poll.allowTentativeVotes,
             isGuest: false,
@@ -618,6 +621,7 @@ app.post(
         requireParticipantEmail: input.requireEmail,
         hideParticipants: input.hideParticipants,
         hideScores: input.hideScores,
+        anonymousResponses: input.anonymousResponses,
         disableComments: input.disableComments,
         allowTentativeVotes: input.allowTentativeVotes,
         options,
@@ -909,7 +913,7 @@ app.get(
     tags: ["Polls"],
     summary: "List poll participants",
     description: [
-      "Lists every participant of a poll in one response, oldest response first, each with their availability. The poll must belong to the space associated with the API key.",
+      "Lists every participant of a poll in one response, each with their availability. For anonymous polls, names and email addresses are omitted and responses are returned in a non-chronological order. The poll must belong to the space associated with the API key.",
       "",
       "For aggregate counts per option use the results endpoint.",
     ].join("\n"),

@@ -70,6 +70,7 @@ export const ParticipantDropdown = ({
     React.useState(false);
   const [isDeleteParticipantModalVisible, setIsDeleteParticipantModalVisible] =
     React.useState(false);
+  const poll = usePoll();
 
   return (
     <>
@@ -97,10 +98,12 @@ export const ParticipantDropdown = ({
             <PencilIcon />
             <Trans i18nKey="editVotes" defaults="Edit votes" />
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setIsChangeNameModalVisible(true)}>
-            <TagIcon />
-            <Trans i18nKey="changeName" defaults="Change name" />
-          </DropdownMenuItem>
+          {poll.anonymousResponses ? null : (
+            <DropdownMenuItem onClick={() => setIsChangeNameModalVisible(true)}>
+              <TagIcon />
+              <Trans i18nKey="changeName" defaults="Change name" />
+            </DropdownMenuItem>
+          )}
           {participant.editUrl ? (
             <CopyEditLinkMenuItem
               editUrl={participant.editUrl}

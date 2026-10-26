@@ -100,6 +100,11 @@ export const createPollInputSchema = z
       description: "Hide vote counts from participants",
       example: false,
     }),
+    anonymousResponses: z.boolean().optional().meta({
+      description:
+        "Hide participant identities from other participants and the poll creator",
+      example: false,
+    }),
     disableComments: z.boolean().optional().meta({
       description:
         "Disable the comments section. Defaults to true: new polls have comments disabled unless this is set to false.",
@@ -197,6 +202,11 @@ const pollSchema = z
     createdAt: z.string().datetime().meta({ example: "2025-01-10T12:00:00Z" }),
     user: pollUserSchema.nullable().meta({
       description: "The poll organizer",
+    }),
+    anonymousResponses: z.boolean().meta({
+      description:
+        "Whether participant identities are hidden from other participants and the poll creator",
+      example: false,
     }),
     options: z.array(pollOptionSchema),
     adminUrl: z.string().meta({ example: "https://example.com/poll/p_123abc" }),

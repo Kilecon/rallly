@@ -15,14 +15,17 @@ import {
   listParticipantIdsByToken,
   listPollComments,
   listPollParticipants,
+  orderAnonymousResponses,
 } from "@/features/poll/data";
 import { getPollInvitePath } from "@/features/poll/invite/utils";
 import {
   filterCommentsForViewer,
+  maskParticipantsForPollCreator,
   maskParticipantsForViewer,
 } from "@/features/poll/utils";
 import { loadActiveSpaceContentScope } from "@/features/space/loaders";
 import { getUser } from "@/features/user/data";
+import { getTranslation } from "@/i18n/server";
 import { getSession } from "@/lib/auth";
 
 export const loadPollStatusCounts = cache(async () => {
@@ -55,14 +58,36 @@ const getEditUrl = ({ pollId, token }: { pollId: string; token: string }) =>
   shortUrl(getPollInvitePath({ pollId, token }));
 
 export const loadPollParticipants = cache(async (pollId: string) => {
-  const participants = await loadParticipantRows(pollId);
-  return participants.map(({ id, name, note, image, createdAt, token }) => ({
+  const [participants, poll] = await Promise.all([
+    loadParticipantRows(pollId),
+    loadPoll(pollId),
+  ]);
+  const rows = (
+    poll.anonymousResponses
+      ? orderAnonymousResponses(participants)
+      : participants
+  ).map(({ id, name, note, image, createdAt, token }) => ({
     id,
     name,
     note,
     image,
     createdAt,
     editUrl: getEditUrl({ pollId, token }),
+  }));
+  if (!poll.anonymousResponses) {
+    return rows;
+  }
+  const { t } = await getTranslation();
+  const anonymousLabel = t("anonymousResponseLabel", {
+    defaultValue: "Anonymous response",
+  });
+  return rows.map((row) => ({
+    ...row,
+    name: anonymousLabel,
+    note: null,
+    image: null,
+    createdAt: new Date(0),
+    editUrl: null,
   }));
 });
 
@@ -72,15 +97,34 @@ export const loadPollParticipants = cache(async (pollId: string) => {
  */
 export const loadOptionalPollResponse = cache(
   async (pollId: string, participantId: string) => {
-    const participants = await loadParticipantRows(pollId);
+    const [participants, poll] = await Promise.all([
+      loadParticipantRows(pollId),
+      loadPoll(pollId),
+    ]);
     const participant = participants.find(({ id }) => id === participantId);
 
     if (!participant) {
       return null;
     }
 
-    const { token, userId: _userId, ...rest } = participant;
-    return { ...rest, editUrl: getEditUrl({ pollId, token }) };
+    const { token, ...rest } = participant;
+    const response = {
+      ...rest,
+      hidden: false,
+      editUrl: getEditUrl({ pollId, token }),
+    };
+    if (!poll.anonymousResponses) {
+      const { userId: _userId, ...hostResponse } = response;
+      return hostResponse;
+    }
+    const { t } = await getTranslation();
+    const [maskedResponse] = maskParticipantsForPollCreator(
+      [response],
+      true,
+      t("anonymousResponseLabel", { defaultValue: "Anonymous response" }),
+    );
+    const { userId: _userId, ...hostResponse } = maskedResponse;
+    return hostResponse;
   },
 );
 
@@ -123,20 +167,28 @@ export const loadPollTopOptions = cache(
 
 export const loadPollActivity = cache(
   async (pollId: string, limit?: number) => {
-    const [scope] = await Promise.all([
+    const [scope, poll] = await Promise.all([
       loadActiveSpaceContentScope(),
       loadPoll(pollId),
     ]);
-    return listPollActivity({ pollId, spaceId: scope.spaceId, limit });
+    return listPollActivity({
+      pollId,
+      spaceId: scope.spaceId,
+      limit,
+      excludeParticipantActivity: poll.anonymousResponses,
+    });
   },
 );
 
 export const loadPollResponseActivity = cache(
   async (pollId: string, participantId: string) => {
-    const [scope] = await Promise.all([
+    const [scope, poll] = await Promise.all([
       loadActiveSpaceContentScope(),
       loadPoll(pollId),
     ]);
+    if (poll.anonymousResponses) {
+      return [];
+    }
     return listPollActivity({
       pollId,
       spaceId: scope.spaceId,
@@ -188,12 +240,12 @@ export const loadInvitePoll = cache(
       participants: maskParticipantsForViewer({
         participants,
         viewer,
-        hideParticipants: poll.hideParticipants,
+        hideParticipants: poll.hideParticipants || poll.anonymousResponses,
       }),
       comments: filterCommentsForViewer({
         comments,
         viewerUserId: viewer.userId,
-        hideParticipants: poll.hideParticipants,
+        hideParticipants: poll.hideParticipants || poll.anonymousResponses,
       }),
       linkedParticipantIds,
       user,
@@ -224,17 +276,32 @@ export const loadAdminPoll = cache(async (pollId: string) => {
     listPollParticipants({ pollId }),
     listPollComments({ pollId }),
   ]);
+  const orderedParticipants = poll.anonymousResponses
+    ? orderAnonymousResponses(participants)
+    : participants;
+  const participantRows = orderedParticipants.map(
+    ({ token, ...participant }) => ({
+      ...participant,
+      hidden: false,
+      editUrl: shortUrl(getPollInvitePath({ pollId, token })),
+    }),
+  );
+  const hostParticipants = poll.anonymousResponses
+    ? maskParticipantsForPollCreator(
+        participantRows,
+        true,
+        (await getTranslation()).t("anonymousResponseLabel", {
+          defaultValue: "Anonymous response",
+        }),
+      )
+    : participantRows;
 
   return {
     poll,
     // The host gets each response's edit link, the one its confirmation
     // email carried, to hand to a respondent who left no email. Built from
     // the same path so the two can never diverge.
-    participants: participants.map(({ token, ...participant }) => ({
-      ...participant,
-      hidden: false,
-      editUrl: shortUrl(getPollInvitePath({ pollId, token })),
-    })),
+    participants: hostParticipants,
     comments,
     user,
   };

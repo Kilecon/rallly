@@ -33,7 +33,7 @@ export function PollResponseActions({
 }: {
   participantId: string;
   participantName: string;
-  editUrl: string;
+  editUrl: string | null;
   pollOpen: boolean;
   onDelete?: () => void;
 }) {
@@ -62,20 +62,22 @@ export function PollResponseActions({
           <MoreHorizontalIcon />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => {
-              copy(editUrl);
-              toast(
-                t("participantEditLinkCopied", {
-                  defaultValue: "Edit link for {name} copied",
-                  name: participantName,
-                }),
-              );
-            }}
-          >
-            <LinkIcon />
-            <Trans i18nKey="copyEditLink" defaults="Copy edit link" />
-          </DropdownMenuItem>
+          {editUrl ? (
+            <DropdownMenuItem
+              onClick={() => {
+                copy(editUrl);
+                toast(
+                  t("participantEditLinkCopied", {
+                    defaultValue: "Edit link for {name} copied",
+                    name: participantName,
+                  }),
+                );
+              }}
+            >
+              <LinkIcon />
+              <Trans i18nKey="copyEditLink" defaults="Copy edit link" />
+            </DropdownMenuItem>
+          ) : null}
           {/* A closed or scheduled poll accepts no changes to its responses */}
           <DropdownMenuItem
             variant="destructive"

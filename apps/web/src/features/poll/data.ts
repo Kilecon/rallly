@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import type { PollStatus, Prisma, VoteType } from "@rallly/database";
 import { prisma } from "@rallly/database";
 import { shortUrl } from "@rallly/utils/absolute-url";
@@ -27,6 +28,18 @@ import {
 } from "@/features/space/utils";
 import { decryptToken } from "@/lib/session";
 
+export function orderAnonymousResponses<T extends { id: string }>(
+  participants: T[],
+) {
+  return participants
+    .map((participant) => ({
+      participant,
+      order: createHash("sha256").update(participant.id).digest("hex"),
+    }))
+    .sort((a, b) => a.order.localeCompare(b.order))
+    .map(({ participant }) => participant);
+}
+
 export async function getPoll({
   pollId,
   scope,
@@ -46,6 +59,7 @@ export async function getPoll({
       title: true,
       status: true,
       timeZone: true,
+      anonymousResponses: true,
     },
   });
 }
@@ -183,6 +197,7 @@ export async function getPollParticipants({
     select: {
       id: true,
       kind: true,
+      anonymousResponses: true,
       participants: {
         select: apiParticipantSelect,
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
@@ -197,7 +212,16 @@ export async function getPollParticipants({
   return {
     pollId: poll.id,
     kind: poll.kind,
-    participants: poll.participants,
+    participants: poll.anonymousResponses
+      ? orderAnonymousResponses(
+          poll.participants.map((participant) => ({
+            ...participant,
+            name: "Anonymous response",
+            email: null,
+            createdAt: new Date(0),
+          })),
+        )
+      : poll.participants,
   };
 }
 
@@ -225,6 +249,7 @@ export async function getPollParticipant({
     select: {
       id: true,
       kind: true,
+      anonymousResponses: true,
       participants: {
         where: { id: participantId },
         select: apiParticipantSelect,
@@ -237,8 +262,21 @@ export async function getPollParticipant({
   }
 
   return {
-    poll: { id: poll.id, kind: poll.kind },
-    participant: poll.participants[0] ?? null,
+    poll: {
+      id: poll.id,
+      kind: poll.kind,
+      anonymousResponses: poll.anonymousResponses,
+    },
+    participant: poll.participants[0]
+      ? poll.anonymousResponses
+        ? {
+            ...poll.participants[0],
+            name: "Anonymous response",
+            email: null,
+            createdAt: new Date(0),
+          }
+        : poll.participants[0]
+      : null,
   };
 }
 
@@ -274,6 +312,7 @@ export async function listPolls({
       requireParticipantEmail: true,
       hideParticipants: true,
       hideScores: true,
+      anonymousResponses: true,
       disableComments: true,
       allowTentativeVotes: true,
       user: {
@@ -629,6 +668,7 @@ export async function getPollWithOptions({
       requireParticipantEmail: true,
       hideParticipants: true,
       hideScores: true,
+      anonymousResponses: true,
       disableComments: true,
       allowTentativeVotes: true,
       user: {
@@ -732,6 +772,7 @@ export async function getPollDetails({
       status: true,
       closedReason: true,
       hideParticipants: true,
+      anonymousResponses: true,
       disableComments: true,
       allowTentativeVotes: true,
       hideScores: true,

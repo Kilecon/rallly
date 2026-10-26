@@ -80,6 +80,7 @@ function toPollResponseBody(poll: {
   status: string;
   createdAt: Date;
   user: { name: string; image: string | null } | null;
+  anonymousResponses: boolean;
   options: { id: string; startTime: Date; duration: number }[];
 }) {
   return {
@@ -97,6 +98,7 @@ function toPollResponseBody(poll: {
             image: poll.user.image,
           }
         : null,
+      anonymousResponses: poll.anonymousResponses,
       options: poll.options.map((option) => ({
         id: option.id,
         startTime: option.startTime.toISOString(),
@@ -358,6 +360,7 @@ app.post(
             requireParticipantEmail: input.requireEmail,
             hideParticipants: input.hideParticipants,
             hideScores: input.hideScores,
+            anonymousResponses: input.anonymousResponses,
             disableComments: poll.disableComments,
             allowTentativeVotes: poll.allowTentativeVotes,
             isGuest: false,
@@ -409,6 +412,7 @@ app.post(
         requireParticipantEmail: input.requireEmail,
         hideParticipants: input.hideParticipants,
         hideScores: input.hideScores,
+        anonymousResponses: input.anonymousResponses,
         disableComments: input.disableComments,
         allowTentativeVotes: input.allowTentativeVotes,
         options,
@@ -605,6 +609,7 @@ app.get(
         timeZone: true,
         status: true,
         createdAt: true,
+        anonymousResponses: true,
         user: {
           select: {
             name: true,
@@ -789,7 +794,7 @@ app.get(
     tags: ["Polls"],
     summary: "Get poll participants",
     description:
-      "Retrieves all participants and their votes for a poll. The poll must belong to the space associated with the API key.",
+      "Retrieves all participants and their votes for a poll. For anonymous polls, identities are omitted and responses are returned in a non-chronological order. The poll must belong to the space associated with the API key.",
     security: [{ bearerAuth: [] }],
     responses: {
       200: {

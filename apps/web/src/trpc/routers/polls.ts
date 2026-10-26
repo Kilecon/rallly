@@ -213,6 +213,7 @@ export const polls = router({
           .optional(),
         hideParticipants: z.boolean().optional(),
         hideScores: z.boolean().optional(),
+        anonymousResponses: z.boolean().optional(),
         disableComments: z.boolean().optional(),
         allowTentativeVotes: z.boolean().optional(),
         requireParticipantEmail: z.boolean().optional(),
@@ -344,6 +345,7 @@ export const polls = router({
             disableComments: input.disableComments,
             allowTentativeVotes: input.allowTentativeVotes,
             hideScores: input.hideScores,
+            anonymousResponses: input.anonymousResponses,
             requireParticipantEmail: input.requireParticipantEmail,
             spaceId,
           },
@@ -454,6 +456,7 @@ export const polls = router({
         disableComments: z.boolean().optional(),
         allowTentativeVotes: z.boolean().optional(),
         hideScores: z.boolean().optional(),
+        anonymousResponses: z.boolean().optional(),
         requireParticipantEmail: z.boolean().optional(),
       }),
     )
@@ -584,6 +587,7 @@ export const polls = router({
             disableComments: true,
             allowTentativeVotes: true,
             requireParticipantEmail: true,
+            anonymousResponses: true,
           },
         });
 
@@ -610,6 +614,22 @@ export const polls = router({
               code: "BAD_REQUEST",
               message:
                 "Tentative votes cannot be turned off once participants have used them",
+            });
+          }
+        }
+
+        if (
+          input.anonymousResponses !== undefined &&
+          input.anonymousResponses !== prior.anonymousResponses
+        ) {
+          const responseCount = await tx.participant.count({
+            where: { pollId },
+          });
+          if (responseCount > 0) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message:
+                "Response anonymity cannot be changed after someone responds",
             });
           }
         }
@@ -695,6 +715,7 @@ export const polls = router({
             disableComments: input.disableComments,
             allowTentativeVotes: input.allowTentativeVotes,
             requireParticipantEmail: input.requireParticipantEmail,
+            anonymousResponses: input.anonymousResponses,
             kind,
           },
         });
@@ -729,6 +750,7 @@ export const polls = router({
             disableComments: prior.disableComments,
             allowTentativeVotes: prior.allowTentativeVotes,
             requireParticipantEmail: prior.requireParticipantEmail,
+            anonymousResponses: prior.anonymousResponses,
           },
           next: {
             title: input.title,
@@ -741,6 +763,7 @@ export const polls = router({
             disableComments: input.disableComments,
             allowTentativeVotes: input.allowTentativeVotes,
             requireParticipantEmail: input.requireParticipantEmail,
+            anonymousResponses: input.anonymousResponses,
           },
         });
 
@@ -810,6 +833,7 @@ export const polls = router({
           requireParticipantEmail: true,
           hideParticipants: true,
           hideScores: true,
+          anonymousResponses: true,
           timeZone: true,
           muted: true,
           _count: {
@@ -859,6 +883,7 @@ export const polls = router({
         input.disableComments !== undefined ||
         input.allowTentativeVotes !== undefined ||
         input.hideScores !== undefined ||
+        input.anonymousResponses !== undefined ||
         input.requireParticipantEmail !== undefined;
 
       if (hasDetailsUpdate) {
@@ -896,6 +921,7 @@ export const polls = router({
             allow_tentative_votes: !!updatedPoll.allowTentativeVotes,
             hide_participants: !!updatedPoll.hideParticipants,
             hide_scores: !!updatedPoll.hideScores,
+            anonymous_responses: !!updatedPoll.anonymousResponses,
             require_participant_email: !!updatedPoll.requireParticipantEmail,
           },
           groups: {

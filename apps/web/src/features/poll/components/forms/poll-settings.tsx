@@ -63,6 +63,7 @@ function VoteOptionLabel({ types }: { types: VoteType[] }) {
 export const PollSettingsForm = ({
   children,
   hasTentativeVotes = false,
+  hasResponses = false,
 }: React.PropsWithChildren<{
   /**
    * True when responses already use the tentative vote. Those votes stay
@@ -70,6 +71,7 @@ export const PollSettingsForm = ({
    * rule is enforced in the modify mutation.
    */
   hasTentativeVotes?: boolean;
+  hasResponses?: boolean;
 }>) => {
   const form = useFormContext<PollSettingsFormData>();
   const isFree = useIsFree();
@@ -196,6 +198,46 @@ export const PollSettingsForm = ({
                       field.onChange(checked);
                     }
                   }}
+                />
+              </Field>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="anonymousResponses"
+            render={({ field }) => (
+              <Field orientation="horizontal">
+                <SettingIcon>
+                  <VenetianMaskIcon />
+                </SettingIcon>
+                <FieldContent>
+                  <FieldLabel htmlFor="anonymous-responses">
+                    <Trans
+                      i18nKey="anonymousResponsesTitle"
+                      defaults="Anonymous responses"
+                    />
+                  </FieldLabel>
+                  <FieldDescription>
+                    <Trans
+                      i18nKey="anonymousResponsesDescription"
+                      defaults="Participants and the poll creator cannot see who submitted each response. Names, emails, notes, and individual email notifications are hidden."
+                    />
+                    {hasResponses ? (
+                      <>
+                        {" "}
+                        <Trans
+                          i18nKey="anonymousResponsesLockedDescription"
+                          defaults="This setting cannot be changed after someone responds."
+                        />
+                      </>
+                    ) : null}
+                  </FieldDescription>
+                </FieldContent>
+                <Switch
+                  id="anonymous-responses"
+                  checked={!!field.value}
+                  disabled={hasResponses}
+                  onCheckedChange={field.onChange}
                 />
               </Field>
             )}

@@ -162,6 +162,7 @@ const iconByChange: Record<PollChange["field"], LucideIcon> = {
   timeZone: GlobeIcon,
   hideParticipants: VenetianMaskIcon,
   hideScores: BarChart2Icon,
+  anonymousResponses: VenetianMaskIcon,
   disableComments: MessageCircleIcon,
   allowTentativeVotes: ListChecksIcon,
   requireParticipantEmail: MailIcon,
@@ -181,6 +182,7 @@ function toneOfChange(change: PollChange): keyof typeof toneClassName {
     // requiring an email takes something away.
     case "hideParticipants":
     case "hideScores":
+    case "anonymousResponses":
     case "disableComments":
     case "requireParticipantEmail":
       return change.from ? "added" : "removed";
@@ -288,6 +290,18 @@ function ChangeDescription({ change }: { change: PollChange }) {
         <Trans i18nKey="pollActivityVotesShown" defaults="Votes shown" />
       ) : (
         <Trans i18nKey="pollActivityVotesHidden" defaults="Votes hidden" />
+      );
+    case "anonymousResponses":
+      return change.from ? (
+        <Trans
+          i18nKey="pollActivityResponsesNotAnonymous"
+          defaults="Responses made visible to the creator"
+        />
+      ) : (
+        <Trans
+          i18nKey="pollActivityResponsesAnonymous"
+          defaults="Responses made anonymous to the creator"
+        />
       );
     case "disableComments":
       return change.from ? (

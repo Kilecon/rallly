@@ -14,18 +14,22 @@ export async function listPollActivity({
   pollId,
   spaceId,
   participantId,
+  excludeParticipantActivity,
   limit,
 }: {
   pollId: string;
   spaceId: AuthorizedSpaceId;
   /** Only the events about this response. */
   participantId?: string;
+  /** Hide response-specific history from organizers of anonymous polls. */
+  excludeParticipantActivity?: boolean;
   limit?: number;
 }) {
   const rows = await prisma.pollActivity.findMany({
     where: {
       pollId,
       ...(participantId && { participantId }),
+      ...(excludeParticipantActivity && { participantId: null }),
       poll: {
         spaceId,
         deleted: false,

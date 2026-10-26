@@ -155,6 +155,7 @@ describe("Private API - /polls", () => {
       location: null,
       timeZone: null,
       status: "open",
+      anonymousResponses: false,
       createdAt: new Date("2025-01-10T12:00:00Z"),
       user: {
         name: "Test User",
@@ -658,6 +659,7 @@ describe("Private API - /polls", () => {
         location: null,
         timeZone: "Europe/London",
         status: "open",
+        anonymousResponses: false,
         createdAt: new Date("2025-01-10T12:00:00Z"),
         user: { name: "Test User", image: null },
         options: [
@@ -1046,6 +1048,7 @@ describe("Private API - /polls", () => {
       location: null,
       timeZone: null,
       status: "closed",
+      anonymousResponses: false,
       createdAt: new Date("2025-01-10T12:00:00Z"),
       user: { name: "Test User", image: null },
       options: [],
@@ -1243,6 +1246,7 @@ describe("Private API - /polls", () => {
       location: "Zoom",
       timeZone: "Europe/London",
       status: "open",
+      anonymousResponses: false,
       createdAt: new Date("2025-01-10T12:00:00Z"),
       user: {
         name: "John Doe",
@@ -1382,6 +1386,7 @@ describe("Private API - /polls", () => {
       location: "Zoom",
       timeZone: "Europe/London",
       status: "open",
+      anonymousResponses: false,
       createdAt: new Date("2025-01-10T12:00:00Z"),
       user: {
         name: "John Doe",

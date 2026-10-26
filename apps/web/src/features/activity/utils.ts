@@ -6,6 +6,7 @@ type ChangeAction = "added" | "changed" | "removed";
 const settingFields = [
   "hideParticipants",
   "hideScores",
+  "anonymousResponses",
   "disableComments",
   "allowTentativeVotes",
   "requireParticipantEmail",

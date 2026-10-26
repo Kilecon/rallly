@@ -31,6 +31,7 @@ function TestForm({
       requireParticipantEmail: false,
       hideParticipants: false,
       hideScores: false,
+      anonymousResponses: false,
     },
   });
   return (

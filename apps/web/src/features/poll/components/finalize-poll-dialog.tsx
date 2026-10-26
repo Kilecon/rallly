@@ -618,7 +618,11 @@ function FinalizeWizard({ onClose }: { onClose: () => void }) {
           onPick={(id) => {
             setOptionId(id);
             // With nobody to notify, the notify step has nothing to ask.
-            setStep(participants.length > 0 ? "notify" : "summary");
+            setStep(
+              participants.length > 0 && !poll.anonymousResponses
+                ? "notify"
+                : "summary",
+            );
           }}
         />
       </div>
@@ -671,7 +675,13 @@ function FinalizeWizard({ onClose }: { onClose: () => void }) {
         />
         <DialogFooter>
           <Button
-            onClick={() => setStep(participants.length > 0 ? "notify" : "date")}
+            onClick={() =>
+              setStep(
+                participants.length > 0 && !poll.anonymousResponses
+                  ? "notify"
+                  : "date",
+              )
+            }
           >
             <Trans i18nKey="back" defaults="Back" />
           </Button>

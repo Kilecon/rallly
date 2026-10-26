@@ -59,6 +59,7 @@ async function ResponseDetail({
       kind={results.kind}
       timeZone={poll.timeZone}
       response={response}
+      anonymousResponses={poll.anonymousResponses}
       options={results.options}
       activity={
         <PollActivityList activity={activity} timeZone={poll.timeZone} />
@@ -91,6 +92,7 @@ export default async function Page({
         pollId={pollId}
         participants={participants}
         pollOpen={poll.status === "open"}
+        anonymousResponses={poll.anonymousResponses}
       />
     );
   }
@@ -108,6 +110,7 @@ export default async function Page({
           pollId={pollId}
           participants={participants}
           pollOpen={poll.status === "open"}
+          anonymousResponses={poll.anonymousResponses}
           selectedId={responseId}
           compact
         />

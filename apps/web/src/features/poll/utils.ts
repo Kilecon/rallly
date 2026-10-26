@@ -77,6 +77,32 @@ export function maskParticipantsForViewer({
 }
 
 /**
+ * Removes response identity and timing from data returned to the poll
+ * creator. The underlying participant rows remain unchanged for respondents.
+ */
+export function maskParticipantsForPollCreator<T extends PollParticipant>(
+  participants: T[],
+  anonymousResponses: boolean,
+  anonymousLabel: string,
+): T[] {
+  if (!anonymousResponses) {
+    return participants;
+  }
+
+  return participants.map((participant) => ({
+    ...participant,
+    name: anonymousLabel,
+    email: null,
+    userId: null,
+    note: null,
+    image: null,
+    createdAt: new Date(0),
+    hidden: false,
+    editUrl: null,
+  }));
+}
+
+/**
  * With hidden participants, a viewer who is not the host sees only their
  * own comments; the author names would otherwise reveal who responded.
  */

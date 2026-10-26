@@ -27,7 +27,7 @@ type ResponseRow = {
   note: string | null;
   image: string | null;
   createdAt: Date;
-  editUrl: string;
+  editUrl: string | null;
 };
 
 const columnHelper = createColumnHelper<ResponseRow>();
@@ -41,6 +41,7 @@ export function PollResponsesList({
   pollId,
   participants,
   pollOpen,
+  anonymousResponses,
   selectedId,
   compact = false,
   className,
@@ -48,6 +49,7 @@ export function PollResponsesList({
   pollId: string;
   participants: ResponseRow[];
   pollOpen: boolean;
+  anonymousResponses?: boolean;
   selectedId?: string;
   compact?: boolean;
   className?: string;
@@ -55,7 +57,12 @@ export function PollResponsesList({
   const columns = React.useMemo(
     () => [
       columnHelper.accessor("name", {
-        header: () => <Trans i18nKey="name" defaults="Name" />,
+        header: () =>
+          anonymousResponses ? (
+            <Trans i18nKey="responses" defaults="Responses" />
+          ) : (
+            <Trans i18nKey="name" defaults="Name" />
+          ),
         cell: ({ row }) => (
           <div className="flex min-w-0 items-center gap-3">
             <OptimizedAvatarImage
@@ -78,9 +85,8 @@ export function PollResponsesList({
           </div>
         ),
       }),
-      ...(compact
-        ? []
-        : [
+      ...(!compact && !anonymousResponses
+        ? [
             columnHelper.accessor("note", {
               header: () => (
                 <Trans i18nKey="pollResponsesListNote" defaults="Note" />
@@ -94,14 +100,21 @@ export function PollResponsesList({
                 </span>
               ),
             }),
-          ]),
-      columnHelper.accessor("createdAt", {
-        header: () => <Trans i18nKey="respondedOn" defaults="Responded on" />,
-        meta: {
-          className: "justify-end text-muted-foreground text-xs",
-        },
-        cell: ({ getValue }) => <RelativeTime value={getValue()} />,
-      }),
+          ]
+        : []),
+      ...(!anonymousResponses
+        ? [
+            columnHelper.accessor("createdAt", {
+              header: () => (
+                <Trans i18nKey="respondedOn" defaults="Responded on" />
+              ),
+              meta: {
+                className: "justify-end text-muted-foreground text-xs",
+              },
+              cell: ({ getValue }) => <RelativeTime value={getValue()} />,
+            }),
+          ]
+        : []),
       ...(compact
         ? []
         : [
@@ -121,7 +134,7 @@ export function PollResponsesList({
             }),
           ]),
     ],
-    [compact, pollId, pollOpen, selectedId],
+    [anonymousResponses, compact, pollId, pollOpen, selectedId],
   );
 
   const table = useReactTable({
@@ -154,9 +167,13 @@ export function PollResponsesList({
     <DataList
       table={table}
       className={cn(
-        compact
-          ? "grid-cols-[minmax(0,1fr)_auto]"
-          : "grid-cols-[minmax(0,1fr)_auto_auto] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto_auto]",
+        anonymousResponses
+          ? compact
+            ? "grid-cols-1"
+            : "grid-cols-[minmax(0,1fr)_auto]"
+          : compact
+            ? "grid-cols-[minmax(0,1fr)_auto]"
+            : "grid-cols-[minmax(0,1fr)_auto_auto] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto_auto]",
         className,
       )}
     />
