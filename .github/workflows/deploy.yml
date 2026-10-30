@@ -1,4 +1,4 @@
-name: CI Build, Push and Deploy API
+name: CI Build, Push and Deploy
 
 permissions:
   contents: write
