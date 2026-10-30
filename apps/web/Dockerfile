@@ -34,7 +34,7 @@ ENV NEXT_PUBLIC_APP_VERSION=$APP_VERSION
 ARG SELF_HOSTED
 ENV NEXT_PUBLIC_SELF_HOSTED=$SELF_HOSTED
 
-RUN SKIP_ENV_VALIDATION=1 pnpm build
+RUN NEXT_PUBLIC_SELF_HOSTED=true SKIP_ENV_VALIDATION=1 pnpm exec turbo run build --filter=@rallly/web
 
 # --- Runner Stage ---
 FROM base-slim AS runner
