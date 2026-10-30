@@ -1,6 +1,6 @@
 services:
   rally:
-    image: registry.mizury.fr/rallly:latest
+    image: ${RALLLY_IMAGE:-registry.mizury.fr/rallly:latest}
     networks: 
       - proxy-network
 

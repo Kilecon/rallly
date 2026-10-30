@@ -43,6 +43,14 @@ Prefer to run your own instance? Rallly ships as a Docker image and can be self-
 
 See the [self-hosting docs](https://support.rallly.co/self-hosting) for installation and [configuration options](https://support.rallly.co/self-hosting/configuration-options).
 
+### Private registry deployment
+
+The [deployment workflow](.github/workflows/deploy.yml) builds from the repository root using [the web Dockerfile](apps/web/Dockerfile). On the VPS, `VPS_APP_PATH` must contain an up-to-date [docker-compose.vps.yml](docker-compose.vps.yml), with the `rally` service configured for your instance (database, application environment and proxy network). Docker Compose must support `up --wait --wait-timeout`.
+
+The workflow sets `RALLLY_IMAGE` to the published version tag, pulls only `rally`, and waits up to five minutes for its health check before reporting success. Database migrations run at container startup, except when `MAINTENANCE_MODE=true`; check the container logs if startup fails. Without `RALLLY_IMAGE`, Compose defaults to `latest`.
+
+Configure the registry secrets (`REGISTRY_URL`, `REGISTRY_USER`, `REGISTRY_PASSWORD`), SSH secrets (`VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_PORT`, `VPS_APP_PATH`) and `DISCORD_WEBHOOK_URL` in GitHub Actions. Discord receives failures from either job, and an HTTP error from Discord fails the notification step.
+
 ## 🛠️ Built with
 
 [Next.js](https://github.com/vercel/next.js/) · [Prisma](https://github.com/prisma/prisma) · [tRPC](https://github.com/trpc/trpc) · [TailwindCSS](https://github.com/tailwindlabs/tailwindcss)
