@@ -1,8 +1,9 @@
 services:
   rally:
-    image: ${RALLLY_IMAGE:-registry.mizury.fr/rallly:latest}
+    image: registry.mizury.fr/rallly:latest
     networks: 
       - proxy-network
+      - rallly-default
 
   rallly_db:
     image: postgres:18-alpine
@@ -19,6 +20,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+     - rallly-default
   
   redis:
     image: redis:7.4-alpine
@@ -44,6 +47,8 @@ services:
       SRH_MODE: env
       SRH_TOKEN: dev_fake_token_123456789abcdefghijklmnop
       SRH_CONNECTION_STRING: "redis://redis:6379"
+    networks:
+      - rallly-default
   garage:
     image: dxflrs/garage:v2.3.0
     restart: always
@@ -66,6 +71,8 @@ services:
       retries: 3
       start_period: 10s
       start_interval: 5s
+    networks:
+      - rallly-default
   mailpit:
     image: axllent/mailpit
     ports:
@@ -76,6 +83,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks :
+      - rallly-default
+      - proxy-network
 
   garage_init:
     image: amazon/aws-cli
@@ -90,6 +100,8 @@ services:
       - ./docker/cors.json:/cors.json:ro
     entrypoint: ["sh", "-c", "aws --endpoint-url http://garage:3900 s3api put-bucket-cors --bucket rallly --cors-configuration file:///cors.json"]
     restart: "no"
+    networks:
+      - rallly-default
 
 volumes:
   db-data:
@@ -104,3 +116,5 @@ volumes:
 networks:
   proxy-network:
     external: true
+  rallly-default: 
+    driver: bridge
