@@ -374,7 +374,6 @@ function LinkButton({
           }}
         >
           <InputGroup>
-            {/* biome-ignore lint/a11y/noAutofocus: intentional focus when opening the link editor */}
             <InputGroupInput
               autoFocus
               value={url}

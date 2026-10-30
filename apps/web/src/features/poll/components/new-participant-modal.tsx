@@ -131,7 +131,6 @@ const VoteSummary = ({
   );
 };
 
-
 const IdentityFromAccountHint = () => (
   <FormDescription>
     <Trans

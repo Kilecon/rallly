@@ -1,4 +1,12 @@
-import { beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  onTestFinished,
+  vi,
+} from "vitest";
 
 // Mock server-only before any imports that might need it
 vi.mock("server-only", () => ({}));
@@ -172,6 +180,12 @@ describe("API v1 - /polls", () => {
     vi.clearAllMocks();
     (redis as unknown as FakeRedis).reset();
 
+    // Freeze the clock before the fixtures' option dates so the past-option
+    // guard treats them as future. Only `Date` is faked, leaving timers and
+    // promises real for the async request handling below.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
     // Mock findMany for the timing-safe lookup
     vi.mocked(prisma.spaceApiKey.findMany).mockResolvedValue([mockApiKey]);
     vi.mocked(prisma.spaceApiKey.findUnique).mockResolvedValue(mockApiKey);
@@ -209,6 +223,10 @@ describe("API v1 - /polls", () => {
       adminUrl: "https://example.com/poll/test-poll-id",
       inviteUrl: "https://example.com/invite/test-poll-id",
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("Authentication", () => {
@@ -570,9 +588,9 @@ describe("API v1 - /polls", () => {
           title: "Team offsite",
           kind: "date",
           options: [
-            { date: "2025-01-15" },
-            { date: "2025-01-16" },
-            { date: "2025-01-17" },
+            { date: "2098-01-15" },
+            { date: "2098-01-16" },
+            { date: "2098-01-17" },
           ],
         }),
       });
@@ -591,15 +609,15 @@ describe("API v1 - /polls", () => {
           title: "Team offsite",
           options: [
             {
-              startTime: new Date("2025-01-15T00:00:00.000Z"),
+              startTime: new Date("2098-01-15T00:00:00.000Z"),
               duration: 0,
             },
             {
-              startTime: new Date("2025-01-16T00:00:00.000Z"),
+              startTime: new Date("2098-01-16T00:00:00.000Z"),
               duration: 0,
             },
             {
-              startTime: new Date("2025-01-17T00:00:00.000Z"),
+              startTime: new Date("2098-01-17T00:00:00.000Z"),
               duration: 0,
             },
           ],
@@ -642,7 +660,7 @@ describe("API v1 - /polls", () => {
         body: JSON.stringify({
           title: "Team offsite",
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
           requireEmail: true,
           hideParticipants: true,
           hideScores: true,
@@ -715,7 +733,7 @@ describe("API v1 - /polls", () => {
         body: JSON.stringify({
           title: "Team offsite",
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
           allowTentativeVotes: false,
         }),
       });
@@ -739,7 +757,7 @@ describe("API v1 - /polls", () => {
         body: JSON.stringify({
           title: "Team offsite",
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -776,7 +794,7 @@ describe("API v1 - /polls", () => {
           title: "Team offsite",
           location: "Conference Room A",
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -824,7 +842,7 @@ describe("API v1 - /polls", () => {
             uri: "https://teams.microsoft.com/l/meetup-join/abc",
           },
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -861,7 +879,7 @@ describe("API v1 - /polls", () => {
             uri: "javascript:alert(1)",
           },
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -881,7 +899,7 @@ describe("API v1 - /polls", () => {
           title: "Team sync",
           conferencing: { provider: "zoom" },
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -903,7 +921,7 @@ describe("API v1 - /polls", () => {
           title: "Team sync",
           conferencing: { provider: "zoom" },
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -925,7 +943,7 @@ describe("API v1 - /polls", () => {
           title: "Team sync",
           conferencing: { provider: "zoom" },
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -937,7 +955,7 @@ describe("API v1 - /polls", () => {
 
     it("should return error when too many date options", async () => {
       const dates = Array.from({ length: 101 }, (_, i) => {
-        const date = new Date(2025, 0, 1 + i);
+        const date = new Date(2098, 0, 1 + i);
         return date.toISOString().split("T")[0];
       });
 
@@ -970,10 +988,10 @@ describe("API v1 - /polls", () => {
           title: "Test Poll",
           kind: "date",
           options: [
-            { date: "2025-01-15" },
-            { date: "2025-01-16" },
-            { date: "2025-01-15" },
-            { date: "2025-01-17" },
+            { date: "2098-01-15" },
+            { date: "2098-01-16" },
+            { date: "2098-01-15" },
+            { date: "2098-01-17" },
           ],
         }),
       });
@@ -982,9 +1000,9 @@ describe("API v1 - /polls", () => {
       expect(mockCreatePoll).toHaveBeenCalledWith(
         expect.objectContaining({
           options: [
-            { startTime: new Date("2025-01-15T00:00:00.000Z"), duration: 0 },
-            { startTime: new Date("2025-01-16T00:00:00.000Z"), duration: 0 },
-            { startTime: new Date("2025-01-17T00:00:00.000Z"), duration: 0 },
+            { startTime: new Date("2098-01-15T00:00:00.000Z"), duration: 0 },
+            { startTime: new Date("2098-01-16T00:00:00.000Z"), duration: 0 },
+            { startTime: new Date("2098-01-17T00:00:00.000Z"), duration: 0 },
           ],
         }),
       );
@@ -1005,8 +1023,8 @@ describe("API v1 - /polls", () => {
           duration: 30,
           timeZone: "Europe/London",
           options: [
-            { startTime: "2025-01-15T09:00:00Z" },
-            { startTime: "2025-01-15T10:00:00Z" },
+            { startTime: "2098-01-15T09:00:00Z" },
+            { startTime: "2098-01-15T10:00:00Z" },
           ],
         }),
       });
@@ -1050,7 +1068,7 @@ describe("API v1 - /polls", () => {
         options: [
           {
             id: "opt-1",
-            startTime: new Date("2025-01-15T09:00:00Z"),
+            startTime: new Date("2098-01-15T09:00:00Z"),
             duration: 30,
           },
         ],
@@ -1101,7 +1119,7 @@ describe("API v1 - /polls", () => {
           title: "Team sync",
           kind: "time",
           duration: 30,
-          options: [{ startTime: "2025-01-15T09:00:00Z" }],
+          options: [{ startTime: "2098-01-15T09:00:00Z" }],
         }),
       });
 
@@ -1125,7 +1143,7 @@ describe("API v1 - /polls", () => {
           kind: "time",
           duration: 30,
           timeZone: "Invalid/Timezone",
-          options: [{ startTime: "2025-01-15T09:00:00Z" }],
+          options: [{ startTime: "2098-01-15T09:00:00Z" }],
         }),
       });
 
@@ -1146,8 +1164,8 @@ describe("API v1 - /polls", () => {
           timeZone: "Europe/London",
           generators: [
             {
-              startDate: "2025-01-20",
-              endDate: "2025-01-22",
+              startDate: "2098-01-20",
+              endDate: "2098-01-22",
               days: ["mon", "tue", "wed"],
               from: "09:00",
               to: "10:00",
@@ -1178,8 +1196,8 @@ describe("API v1 - /polls", () => {
           timeZone: "Europe/London",
           generators: [
             {
-              startDate: "2025-01-01",
-              endDate: "2026-06-01",
+              startDate: "2098-01-01",
+              endDate: "2099-06-01",
               days: ["sun"],
               from: "09:00",
               to: "09:30",
@@ -1215,8 +1233,8 @@ describe("API v1 - /polls", () => {
           timeZone: "Europe/London",
           generators: [
             {
-              startDate: "2025-06-01",
-              endDate: "2025-01-01",
+              startDate: "2098-06-01",
+              endDate: "2098-01-01",
               days: ["mon"],
               from: "09:00",
               to: "10:00",
@@ -1237,7 +1255,7 @@ describe("API v1 - /polls", () => {
     it("should reject a range spanning exactly MAX_SLOT_GENERATION_DAYS", async () => {
       // The generator processes days inclusively, so a span equal to the cap is
       // one day too many — the boundary must reject, not truncate.
-      const start = new Date(Date.UTC(2025, 0, 1));
+      const start = new Date(Date.UTC(2098, 0, 1));
       const end = new Date(start);
       end.setUTCDate(end.getUTCDate() + MAX_SLOT_GENERATION_DAYS);
       const toIsoDate = (d: Date) => d.toISOString().slice(0, 10);
@@ -1279,8 +1297,8 @@ describe("API v1 - /polls", () => {
           kind: "time",
           duration: 30,
           options: [
-            { startTime: "2025-01-15T09:00:00Z" },
-            { startTime: "2025-01-15T10:00:00Z", duration: 45 },
+            { startTime: "2098-01-15T09:00:00Z" },
+            { startTime: "2098-01-15T10:00:00Z", duration: 45 },
           ],
         }),
       });
@@ -1289,8 +1307,8 @@ describe("API v1 - /polls", () => {
       expect(mockCreatePoll).toHaveBeenCalledWith(
         expect.objectContaining({
           options: [
-            { startTime: new Date("2025-01-15T09:00:00Z"), duration: 30 },
-            { startTime: new Date("2025-01-15T10:00:00Z"), duration: 45 },
+            { startTime: new Date("2098-01-15T09:00:00Z"), duration: 30 },
+            { startTime: new Date("2098-01-15T10:00:00Z"), duration: 45 },
           ],
         }),
       );
@@ -1306,7 +1324,7 @@ describe("API v1 - /polls", () => {
         body: JSON.stringify({
           title: "Team sync",
           kind: "time",
-          options: [{ startTime: "2025-01-15T09:00:00Z", duration: 45 }],
+          options: [{ startTime: "2098-01-15T09:00:00Z", duration: 45 }],
         }),
       });
 
@@ -1314,7 +1332,7 @@ describe("API v1 - /polls", () => {
       expect(mockCreatePoll).toHaveBeenCalledWith(
         expect.objectContaining({
           options: [
-            { startTime: new Date("2025-01-15T09:00:00Z"), duration: 45 },
+            { startTime: new Date("2098-01-15T09:00:00Z"), duration: 45 },
           ],
         }),
       );
@@ -1331,8 +1349,8 @@ describe("API v1 - /polls", () => {
           title: "Team sync",
           kind: "time",
           options: [
-            { startTime: "2025-01-15T09:00:00Z", duration: 45 },
-            { startTime: "2025-01-15T10:00:00Z" },
+            { startTime: "2098-01-15T09:00:00Z", duration: 45 },
+            { startTime: "2098-01-15T10:00:00Z" },
           ],
         }),
       });
@@ -1357,8 +1375,8 @@ describe("API v1 - /polls", () => {
           kind: "time",
           generators: [
             {
-              startDate: "2025-01-20",
-              endDate: "2025-01-22",
+              startDate: "2098-01-20",
+              endDate: "2098-01-22",
               from: "09:00",
               to: "10:00",
             },
@@ -1411,8 +1429,8 @@ describe("API v1 - /polls", () => {
           generators: [
             {
               // Saturday to Sunday
-              startDate: "2025-01-18",
-              endDate: "2025-01-19",
+              startDate: "2098-01-18",
+              endDate: "2098-01-19",
               from: "09:00",
               to: "09:30",
             },
@@ -1424,8 +1442,8 @@ describe("API v1 - /polls", () => {
       expect(mockCreatePoll).toHaveBeenCalledWith(
         expect.objectContaining({
           options: [
-            { startTime: new Date("2025-01-18T09:00:00Z"), duration: 30 },
-            { startTime: new Date("2025-01-19T09:00:00Z"), duration: 30 },
+            { startTime: new Date("2098-01-18T09:00:00Z"), duration: 30 },
+            { startTime: new Date("2098-01-19T09:00:00Z"), duration: 30 },
           ],
         }),
       );
@@ -1443,11 +1461,11 @@ describe("API v1 - /polls", () => {
           kind: "time",
           duration: 30,
           timeZone: "Europe/London",
-          options: [{ startTime: "2025-01-20T09:00:00" }],
+          options: [{ startTime: "2098-01-20T09:00:00" }],
           generators: [
             {
-              startDate: "2025-01-20",
-              endDate: "2025-01-20",
+              startDate: "2098-01-20",
+              endDate: "2098-01-20",
               days: ["mon"],
               from: "09:00",
               to: "10:00",
@@ -1460,8 +1478,8 @@ describe("API v1 - /polls", () => {
       expect(mockCreatePoll).toHaveBeenCalledWith(
         expect.objectContaining({
           options: [
-            { startTime: new Date("2025-01-20T09:00:00Z"), duration: 30 },
-            { startTime: new Date("2025-01-20T09:30:00Z"), duration: 30 },
+            { startTime: new Date("2098-01-20T09:00:00Z"), duration: 30 },
+            { startTime: new Date("2098-01-20T09:30:00Z"), duration: 30 },
           ],
         }),
       );
@@ -1480,7 +1498,7 @@ describe("API v1 - /polls", () => {
       },
       {
         reason: "the range contains none of the listed days",
-        // 2025-01-20 to 2025-01-22 is Monday to Wednesday
+        // 2098-01-20 to 2098-01-22 is Monday to Wednesday
         generator: { from: "09:00", to: "10:00", days: ["sat", "sun"] },
         path: "generators.0.days",
       },
@@ -1500,7 +1518,7 @@ describe("API v1 - /polls", () => {
           duration: 30,
           timeZone: "Europe/London",
           generators: [
-            { startDate: "2025-01-20", endDate: "2025-01-22", ...generator },
+            { startDate: "2098-01-20", endDate: "2098-01-22", ...generator },
           ],
         }),
       });
@@ -1540,7 +1558,7 @@ describe("API v1 - /polls", () => {
         body: JSON.stringify({
           title: "Test Poll",
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
           timeZone: "Europe/London",
           duration: 30,
         }),
@@ -1563,7 +1581,7 @@ describe("API v1 - /polls", () => {
         },
         body: JSON.stringify({
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -1580,7 +1598,7 @@ describe("API v1 - /polls", () => {
         body: JSON.stringify({
           title: "Test Poll",
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
           spaceId: "some-other-space",
         }),
       });
@@ -1599,7 +1617,7 @@ describe("API v1 - /polls", () => {
         body: {
           title: "Test Poll",
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
           organizer: { email: "a@example.com", name: "Ann" },
         },
         message: 'organizer: Unrecognized key: "name"',
@@ -1610,7 +1628,7 @@ describe("API v1 - /polls", () => {
           title: "Test Poll",
           kind: "time",
           duration: 30,
-          options: [{ startTime: "2025-01-15T09:00:00Z" }],
+          options: [{ startTime: "2098-01-15T09:00:00Z" }],
           timezone: "Europe/London",
         },
         message: 'Unrecognized key: "timezone"',
@@ -1623,8 +1641,8 @@ describe("API v1 - /polls", () => {
           duration: 30,
           generators: [
             {
-              startDate: "2025-01-13",
-              endDate: "2025-01-17",
+              startDate: "2098-01-13",
+              endDate: "2098-01-17",
               days: ["mon"],
               from: "09:00",
               to: "12:00",
@@ -1665,7 +1683,7 @@ describe("API v1 - /polls", () => {
         body: JSON.stringify({
           title: "x".repeat(MAX_POLL_TITLE_LENGTH + 1),
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 
@@ -1687,7 +1705,7 @@ describe("API v1 - /polls", () => {
         body: JSON.stringify({
           title: "x".repeat(MAX_POLL_TITLE_LENGTH),
           kind: "date",
-          options: [{ date: "2025-01-15" }],
+          options: [{ date: "2098-01-15" }],
         }),
       });
 

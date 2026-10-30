@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock server-only before any imports that might need it
 vi.mock("server-only", () => ({}));
@@ -138,6 +138,12 @@ describe("Private API - /polls", () => {
     vi.clearAllMocks();
     (redis as unknown as FakeRedis).reset();
 
+    // Freeze the clock before the fixtures' option dates so the past-option
+    // guard treats them as future. Only `Date` is faked, leaving timers and
+    // promises real for the async request handling below.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2025-01-01T00:00:00Z"));
+
     // Mock findMany for the timing-safe lookup
     vi.mocked(prisma.spaceApiKey.findMany).mockResolvedValue([mockApiKey]);
     vi.mocked(prisma.spaceApiKey.findUnique).mockResolvedValue(mockApiKey);
@@ -164,6 +170,10 @@ describe("Private API - /polls", () => {
       adminUrl: "https://example.com/poll/test-poll-id",
       inviteUrl: "https://example.com/invite/test-poll-id",
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("Authentication", () => {

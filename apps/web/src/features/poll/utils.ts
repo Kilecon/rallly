@@ -5,7 +5,6 @@ import type {
   PollDetails,
   PollParticipant,
 } from "@/features/poll/types";
-import type { SpaceTier } from "@/features/space/schema";
 import {
   getCalendarDate,
   normalizeTimeZone,

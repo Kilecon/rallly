@@ -8,10 +8,10 @@ import { Effect } from "effect";
 import { after } from "next/server";
 import { getInstanceBranding, getSpaceBranding } from "@/emails/branding";
 import { env } from "@/env";
-import { getInstancePolicy } from "@/features/instance-policy/data";
 import { resolveSpaceTier } from "@/features/billing/utils";
 import { chargeEmailBudget } from "@/features/email-budget/mutations";
 import { EmailBudgetStore } from "@/features/email-budget/service";
+import { getInstancePolicy } from "@/features/instance-policy/data";
 import { getNotificationRecipient } from "@/features/notifications/data";
 import { createUnsubscribeToken } from "@/features/notifications/utils";
 import {
