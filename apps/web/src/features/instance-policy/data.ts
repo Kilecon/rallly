@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
+import { env } from "@/env";
 import { loadInstanceLicense } from "@/features/licensing/data";
 import { isSelfHosted } from "@/lib/constants";
 import { isMaintenanceModeEnabled } from "@/lib/maintenance";
@@ -22,5 +23,6 @@ export const getInstancePolicy = cache(async () => {
   return deriveInstancePolicy({
     isSelfHosted,
     whiteLabelAddon: license?.whiteLabelAddon ?? false,
+    requireOidcToVote: env.REQUIRE_OIDC_TO_VOTE === "true",
   });
 });

@@ -8,9 +8,11 @@ import type { InstancePolicy } from "./types";
 export function deriveInstancePolicy({
   isSelfHosted,
   whiteLabelAddon,
+  requireOidcToVote,
 }: {
   isSelfHosted: boolean;
   whiteLabelAddon: boolean;
+  requireOidcToVote: boolean;
 }): InstancePolicy {
   return {
     // Single-tenant instance: the instance is the org boundary, so adding a
@@ -21,5 +23,6 @@ export function deriveInstancePolicy({
     // Self-hosted attribution is licensed at instance level (white label
     // addon + HIDE_ATTRIBUTION), not chosen per space
     spaceAttributionConfigurable: !isSelfHosted,
+    votingRequiresOidc: isSelfHosted && requireOidcToVote,
   };
 }

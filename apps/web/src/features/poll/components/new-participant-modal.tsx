@@ -29,7 +29,9 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { IfCloudHosted } from "@/components/environment";
 import { Link } from "@/components/link";
+import { useInstancePolicy } from "@/features/instance-policy/client";
 import { usePollOrNull } from "@/features/poll/client";
+import { LoginToRespond } from "@/features/poll/components/login-to-respond";
 import {
   useAddParticipant,
   useEditToken,
@@ -129,6 +131,16 @@ const VoteSummary = ({
   );
 };
 
+
+const IdentityFromAccountHint = () => (
+  <FormDescription>
+    <Trans
+      i18nKey="newParticipantFormIdentityFromAccount"
+      defaults="Provided by your organization account."
+    />
+  </FormDescription>
+);
+
 /**
  * Collects participant details and submits a new response after revalidating
  * votes, surfacing server refusals inline without losing the form state.
@@ -143,6 +155,7 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
   const { timeZone } = useDateTimeConfig();
   const { user, createGuestIfNeeded } = useUser();
   const isLoggedIn = user && !user.isGuest;
+  const { votingRequiresOidc } = useInstancePolicy();
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -200,10 +213,15 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
   };
   const noteLength = watch("note")?.length ?? 0;
   const [showNote, setShowNote] = React.useState(false);
+  const [isOidcMissing, setIsOidcMissing] = React.useState(false);
   const addParticipant = useAddParticipant();
   // An emailed invite link carries the invite token; the response takes it
   // over so the host sees who responded and the same link edits it later.
   const token = useEditToken();
+
+  if ((votingRequiresOidc && !isLoggedIn) || isOidcMissing) {
+    return <LoginToRespond />;
+  }
 
   if (formState.isSubmitSuccessful) {
     return (
@@ -309,6 +327,10 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
               timeZone,
               token,
             });
+            if (!result.ok && result.reason === "loginRequired") {
+              setIsOidcMissing(true);
+              return;
+            }
             if (!result.ok) {
               setError("root", {
                 message: getSubmitErrorMessage(result.reason),
@@ -330,11 +352,12 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
                     className="w-full"
                     {...passwordManagerIgnoreProps}
                     autoFocus={true}
-                    disabled={formState.isSubmitting}
+                    disabled={formState.isSubmitting || votingRequiresOidc}
                     placeholder={t("namePlaceholder")}
                     {...field}
                   />
                 </FormControl>
+                {votingRequiresOidc ? <IdentityFromAccountHint /> : null}
                 <FormMessage />
               </FormItem>
             )}
@@ -354,11 +377,12 @@ export const NewParticipantForm = (props: NewParticipantModalProps) => {
                   <Input
                     className="w-full"
                     {...passwordManagerIgnoreProps}
-                    disabled={formState.isSubmitting}
+                    disabled={formState.isSubmitting || votingRequiresOidc}
                     placeholder={t("emailPlaceholder")}
                     {...field}
                   />
                 </FormControl>
+                {votingRequiresOidc ? <IdentityFromAccountHint /> : null}
                 <FormMessage />
               </FormItem>
             )}
