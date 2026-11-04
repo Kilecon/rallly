@@ -294,6 +294,29 @@ describe("usePollScores", () => {
     );
   });
 
+  it("lets the host add a response on an aggregate-results poll", () => {
+    function AddResponsePermission() {
+      return (
+        <output data-testid="can-add-response">
+          {String(usePermissions().canAddNewParticipant)}
+        </output>
+      );
+    }
+
+    render(
+      <PollProvider
+        poll={{ ...poll, aggregateResultsOnly: true }}
+        participants={[]}
+        comments={[]}
+        viewerRole="admin"
+      >
+        <AddResponsePermission />
+      </PollProvider>,
+    );
+
+    expect(screen.getByTestId("can-add-response").textContent).toBe("true");
+  });
+
   it.each([
     { participants: [] },
     { participants: [participant] },
