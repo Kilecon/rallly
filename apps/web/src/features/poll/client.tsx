@@ -111,11 +111,7 @@ export const usePermissions = () => {
 
   return {
     isOwnParticipant,
-    // The host's page of an aggregate results poll holds totals only, so
-    // responses are added from the invite page.
-    canAddNewParticipant:
-      poll.status === "open" &&
-      !(poll.aggregateResultsOnly && viewerRole === "admin"),
+    canAddNewParticipant: poll.status === "open",
     /**
      * Whether the viewer may change the response: their own, or any as the
      * host of a poll that shows responses, and only while the poll is open.
