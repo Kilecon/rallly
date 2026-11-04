@@ -1,9 +1,14 @@
 services:
   rally:
+    env_file:
+    - .env
     image: registry.mizury.fr/rallly:latest
-    networks: 
+    networks:
       - proxy-network
-      - rallly-default
+      - rallly-garage-network
+      - rallly-mailpit-network
+      - rallly-redis-http-network
+      - rallly-db-network
 
   rallly_db:
     image: postgres:18-alpine
@@ -13,16 +18,15 @@ services:
     volumes:
       - db-data:/var/lib/postgresql
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=rallly
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_DB}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-     - rallly-default
-  
+      - rallly-db-network 
   redis:
     image: redis:7.4-alpine
     restart: always
@@ -35,6 +39,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - redis-network
   serverless-redis-http:
     restart: always
     depends_on:
@@ -44,11 +50,12 @@ services:
       - "8079:80"
     image: hiett/serverless-redis-http:latest
     environment:
-      SRH_MODE: env
-      SRH_TOKEN: dev_fake_token_123456789abcdefghijklmnop
-      SRH_CONNECTION_STRING: "redis://redis:6379"
+      SRH_MODE: ${SRH_MODE}
+      SRH_TOKEN: ${SRH_TOKEN}
+      SRH_CONNECTION_STRING: ${SRH_CONNECTION_STRING}
     networks:
-      - rallly-default
+      - redis-network
+      - rallly-redis-http-network
   garage:
     image: dxflrs/garage:v2.3.0
     restart: always
@@ -60,9 +67,9 @@ services:
       - garage-meta:/var/lib/garage/meta
       - garage-data:/var/lib/garage/data
     environment:
-      - GARAGE_DEFAULT_ACCESS_KEY=rallly-access-key
-      - GARAGE_DEFAULT_SECRET_KEY=rallly-secret-key
-      - GARAGE_DEFAULT_BUCKET=rallly
+      - GARAGE_DEFAULT_ACCESS_KEY=${S3_ACCESS_KEY_ID}
+      - GARAGE_DEFAULT_SECRET_KEY=${S3_SECRET_ACCESS_KEY}
+      - GARAGE_DEFAULT_BUCKET=${S3_BUCKET_NAME}
     command: /garage server --single-node --default-bucket
     healthcheck:
       test: ["CMD", "/garage", "stats", "-a"]
@@ -72,11 +79,11 @@ services:
       start_period: 10s
       start_interval: 5s
     networks:
-      - rallly-default
+      - rallly-garage-network
   mailpit:
     image: axllent/mailpit
     ports:
-      - "8025:8025"
+      - "127.0.0.1:8025:8025"
       - "1025:1025"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8025/readyz"]
@@ -84,7 +91,7 @@ services:
       timeout: 5s
       retries: 5
     networks :
-      - rallly-default
+      - rallly-mailpit-network
       - proxy-network
 
   garage_init:
@@ -93,15 +100,15 @@ services:
       garage:
         condition: service_healthy
     environment:
-      - AWS_ACCESS_KEY_ID=rallly-access-key
-      - AWS_SECRET_ACCESS_KEY=rallly-secret-key
-      - AWS_DEFAULT_REGION=garage
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
     volumes:
       - ./docker/cors.json:/cors.json:ro
     entrypoint: ["sh", "-c", "aws --endpoint-url http://garage:3900 s3api put-bucket-cors --bucket rallly --cors-configuration file:///cors.json"]
     restart: "no"
     networks:
-      - rallly-default
+      - rallly-garage-network
 
 volumes:
   db-data:
@@ -116,5 +123,15 @@ volumes:
 networks:
   proxy-network:
     external: true
-  rallly-default: 
+  rallly-db-network:
+    driver: bridge
+  redis-network:
+    driver: bridge
+  authentication-network:
+    driver: bridge
+  rallly-redis-http-network:
+    driver: bridge
+  rallly-garage-network:
+    driver: bridge
+  rallly-mailpit-network:
     driver: bridge
