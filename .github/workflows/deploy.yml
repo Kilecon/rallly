@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.vars.outputs.tag }}
-      release_url: ${{ steps.create_release.outputs.html_url }}
+      release_url: ${{ steps.create_release.outputs.url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -117,6 +117,38 @@ jobs:
             docker compose -f docker-compose.vps.yml pull rally
             docker compose -f docker-compose.vps.yml up -d --wait --wait-timeout 300 rally
 
+      # The container healthcheck only probes localhost inside the container: it
+      # stays green when the reverse proxy answers 502. Probe the public URL so
+      # the whole chain (DNS, TLS, proxy, app, database) is verified.
+      - name: Check production is reachable
+        env:
+          PROD_URL: ${{ vars.PROD_URL }}
+          EXPECTED_VERSION: ${{ needs.build-and-push.outputs.tag }}
+        run: |
+          if [ -z "$PROD_URL" ]; then
+            echo "::error::Repository variable PROD_URL is not set"
+            exit 1
+          fi
+          STATUS_URL="${PROD_URL%/}/api/status"
+          for attempt in $(seq 1 12); do
+            HTTP_CODE=$(curl --silent --show-error --location --connect-timeout 5 --max-time 15 \
+              --output status.json --write-out '%{http_code}' "$STATUS_URL" || true)
+            if [ "$HTTP_CODE" = "200" ]; then
+              VERSION=$(jq -r '.version // empty' status.json 2>/dev/null || true)
+              DATABASE=$(jq -r '.database // empty' status.json 2>/dev/null || true)
+              if [ "$VERSION" = "$EXPECTED_VERSION" ] && [ "$DATABASE" = "connected" ]; then
+                echo "✅ $STATUS_URL is up (version $VERSION, database $DATABASE)"
+                exit 0
+              fi
+              echo "Attempt $attempt: HTTP 200 but version=$VERSION database=$DATABASE (expected $EXPECTED_VERSION, connected)"
+            else
+              echo "Attempt $attempt: HTTP $HTTP_CODE from $STATUS_URL"
+            fi
+            sleep 10
+          done
+          echo "::error::$STATUS_URL did not serve version $EXPECTED_VERSION with a connected database after 2 minutes"
+          exit 1
+
       - name: 🔔 Discord Final Notification
         if: always()
         env:
@@ -127,14 +159,15 @@ jobs:
           RELEASE_URL: ${{ needs.build-and-push.outputs.release_url }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           COMMIT_SHA: ${{ github.sha }}
+          PROD_URL: ${{ vars.PROD_URL }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           if [ "$DEPLOY_STATUS" = "success" ]; then
-            MESSAGE=$(printf '🚀 **Rallly - Déploiement réussi !**\n\nImage : `%s/rallly:%s`\n[Release GitHub](%s)\n\nConteneur démarré et vérifié sain ✅\n[Logs GitHub Actions](%s)' "$REGISTRY_URL" "$IMAGE_TAG" "$RELEASE_URL" "$RUN_URL")
+            MESSAGE=$(printf '🚀 **Rallly %s - Déploiement réussi !**\n\n🌐 Prod : %s\n📦 Image : `%s/rallly:%s`\n📝 [Release %s](%s)\n\nConteneur sain et site joignable via %s/api/status ✅\n[Logs GitHub Actions](%s)' "$IMAGE_TAG" "${PROD_URL:-non configurée}" "$REGISTRY_URL" "$IMAGE_TAG" "$IMAGE_TAG" "$RELEASE_URL" "${PROD_URL%/}" "$RUN_URL")
           else
             MESSAGE=$(printf '❌ **Échec du pipeline Rallly !**\n\nBuild/publication/release : %s\nDéploiement : %s\nTag : `%s`\nCommit : `%s`\n\n[Logs GitHub Actions](%s)' "$BUILD_STATUS" "$DEPLOY_STATUS" "$IMAGE_TAG" "$COMMIT_SHA" "$RUN_URL")
           fi
-          jq -n --arg content "$MESSAGE" '{username: "Mizu Registry", content: $content}' > discord-payload.json
+          jq -n --arg content "$MESSAGE" '{username: "Chat Perli-Popette !", content: $content}' > discord-payload.json
           curl --fail-with-body --show-error --silent --connect-timeout 10 --max-time 30 \
             -H "Content-Type: application/json" -X POST \
             --data-binary @discord-payload.json "$DISCORD_WEBHOOK_URL"
