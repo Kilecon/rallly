@@ -135,7 +135,7 @@ const IdentityFromAccountHint = () => (
   <FormDescription>
     <Trans
       i18nKey="newParticipantFormIdentityFromAccount"
-      defaults="Provided by your organization account."
+      defaults="Provided by your OIDC login."
     />
   </FormDescription>
 );

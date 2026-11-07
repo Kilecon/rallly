@@ -23,7 +23,7 @@ export const LoginToRespond = () => {
         <DialogDescription>
           <Trans
             i18nKey="loginToRespondDescription"
-            defaults="This instance only accepts responses from users who log in with their organization account. Your selection is not saved, so you will need to vote again after logging in."
+            defaults="This instance only accepts responses from users who log in with OIDC. Your selection is not saved, so you will need to vote again after logging in."
           />
         </DialogDescription>
       </DialogHeader>
