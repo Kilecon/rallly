@@ -47,6 +47,8 @@ See the [self-hosting docs](https://support.rallly.co/self-hosting) for installa
 
 The [deployment workflow](.github/workflows/deploy.yml) builds from the repository root using [the web Dockerfile](apps/web/Dockerfile). On the VPS, `VPS_APP_PATH` must contain an up-to-date [docker-compose.vps.yml](docker-compose.vps.yml), with the `rally` service configured for your instance (database, application environment and proxy network). Docker Compose must support `up --wait --wait-timeout`.
 
+The same file runs [Authentik](https://goauthentik.io) as the OIDC provider (`authentik_db`, `authentik_server`, `authentik_worker`). The deployment only restarts `rally`, so start Authentik by hand with `docker compose -f docker-compose.vps.yml up -d authentik_server authentik_worker`. Set `AUTHENTIK_PG_PASS` and `AUTHENTIK_SECRET_KEY` in the VPS `.env` (generate them with `openssl rand -base64 36`; never change the secret key afterwards) and point your reverse proxy at `authentik_server:9000` on `proxy-network`. No port is published on the host.
+
 The workflow sets `RALLLY_IMAGE` to the published version tag, pulls only `rally`, and waits up to five minutes for its health check before reporting success. Database migrations run at container startup, except when `MAINTENANCE_MODE=true`; check the container logs if startup fails. Without `RALLLY_IMAGE`, Compose defaults to `latest`.
 
 Configure the registry secrets (`REGISTRY_URL`, `REGISTRY_USER`, `REGISTRY_PASSWORD`), SSH secrets (`VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_PORT`, `VPS_APP_PATH`) and `DISCORD_WEBHOOK_URL` in GitHub Actions. Discord receives failures from either job, and an HTTP error from Discord fails the notification step.
