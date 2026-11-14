@@ -86,6 +86,59 @@ services:
     entrypoint: ["sh", "-c", "aws --endpoint-url http://garage:3900 s3api put-bucket-cors --bucket rallly --cors-configuration file:///cors.json"]
     restart: "no"
 
+  # Authentik: local OIDC identity provider (UI on http://localhost:9000)
+  authentik_db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - authentik-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: ${AUTHENTIK_PG_PASS:-authentik}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d authentik -U authentik"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+  authentik_server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2026.8.3}
+    command: server
+    restart: unless-stopped
+    shm_size: 512mb
+    depends_on:
+      authentik_db:
+        condition: service_healthy
+    ports:
+      - "${AUTHENTIK_PORT_HTTP:-9000}:9000"
+      - "${AUTHENTIK_PORT_HTTPS:-9443}:9443"
+    volumes:
+      - authentik-data:/data
+      - authentik-templates:/templates
+    environment: &authentik-env
+      AUTHENTIK_POSTGRESQL__HOST: authentik_db
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_PG_PASS:-authentik}
+      # dev-only default, never reuse outside local dev
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:-dev_insecure_authentik_secret_key_change_me}
+  authentik_worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2026.8.3}
+    command: worker
+    restart: unless-stopped
+    shm_size: 512mb
+    user: root
+    depends_on:
+      authentik_db:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - authentik-data:/data
+      - authentik-certs:/certs
+      - authentik-templates:/templates
+    environment: *authentik-env
+
 volumes:
   db-data:
     driver: local
@@ -94,4 +147,12 @@ volumes:
   garage-meta:
     driver: local
   garage-data:
+    driver: local
+  authentik-db:
+    driver: local
+  authentik-data:
+    driver: local
+  authentik-certs:
+    driver: local
+  authentik-templates:
     driver: local

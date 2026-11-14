@@ -110,6 +110,63 @@ services:
     networks:
       - rallly-garage-network
 
+  # Authentik: OIDC identity provider. Not published on the host: the reverse
+  # proxy reaches it as authentik_server:9000 over proxy-network.
+  authentik_db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - authentik-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: ${AUTHENTIK_PG_PASS}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d authentik -U authentik"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - authentication-network
+  authentik_server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2026.8.3}
+    command: server
+    restart: unless-stopped
+    shm_size: 512mb
+    depends_on:
+      authentik_db:
+        condition: service_healthy
+    volumes:
+      - authentik-data:/data
+      - authentik-templates:/templates
+    environment: &authentik-env
+      AUTHENTIK_POSTGRESQL__HOST: authentik_db
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_PG_PASS}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+    networks:
+      - authentication-network
+      - proxy-network
+  # No docker.sock and no root here, unlike the dev compose: it is only needed
+  # for managed Docker outposts and would give a compromised worker the host.
+  authentik_worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2026.8.3}
+    command: worker
+    restart: unless-stopped
+    shm_size: 512mb
+    depends_on:
+      authentik_db:
+        condition: service_healthy
+    volumes:
+      - authentik-data:/data
+      - authentik-certs:/certs
+      - authentik-templates:/templates
+    environment: *authentik-env
+    networks:
+      - authentication-network
+
 volumes:
   db-data:
     driver: local
@@ -118,6 +175,14 @@ volumes:
   garage-meta:
     driver: local
   garage-data:
+    driver: local
+  authentik-db:
+    driver: local
+  authentik-data:
+    driver: local
+  authentik-certs:
+    driver: local
+  authentik-templates:
     driver: local
 
 networks:
