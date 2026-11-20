@@ -61,6 +61,12 @@ The following instructions are for running the project locally for development.
    pnpm docker:up
    ```
 
+   The development service ports are bound to `127.0.0.1`, not public
+   interfaces. Local tools can still connect to Postgres, Mailpit, Garage and
+   the Redis HTTP adapter using the sample environment settings. Existing
+   `apps/web/.env` files using `0.0.0.0` as a service host should use
+   `127.0.0.1` instead.
+
    Next run the following command to setup the database:
 
    ```bash

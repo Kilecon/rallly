@@ -3,7 +3,7 @@ services:
     image: postgres:18-alpine
     restart: always
     ports:
-      - "5450:5432"
+      - "127.0.0.1:5450:5432"
     volumes:
       - db-data:/var/lib/postgresql
     environment:
@@ -18,7 +18,7 @@ services:
     image: redis:7.4-alpine
     restart: always
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -32,7 +32,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "8079:80"
+      - "127.0.0.1:8079:80"
     image: hiett/serverless-redis-http:latest
     environment:
       SRH_MODE: env
@@ -42,8 +42,8 @@ services:
     image: dxflrs/garage:v2.3.0
     restart: always
     ports:
-      - "3900:3900"
-      - "3903:3903"
+      - "127.0.0.1:3900:3900"
+      - "127.0.0.1:3903:3903"
     volumes:
       - ./docker/garage.toml:/etc/garage.toml:ro
       - garage-meta:/var/lib/garage/meta
@@ -63,8 +63,8 @@ services:
   mailpit:
     image: axllent/mailpit
     ports:
-      - "8025:8025"
-      - "1025:1025"
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8025/readyz"]
       interval: 5s
@@ -111,8 +111,8 @@ services:
       authentik_db:
         condition: service_healthy
     ports:
-      - "${AUTHENTIK_PORT_HTTP:-9000}:9000"
-      - "${AUTHENTIK_PORT_HTTPS:-9443}:9443"
+      - "127.0.0.1:${AUTHENTIK_PORT_HTTP:-9000}:9000"
+      - "127.0.0.1:${AUTHENTIK_PORT_HTTPS:-9443}:9443"
     volumes:
       - authentik-data:/data
       - authentik-templates:/templates
