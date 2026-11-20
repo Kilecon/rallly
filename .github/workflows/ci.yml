@@ -90,7 +90,7 @@ jobs:
           cat > apps/web/.env <<'EOF'
           SECRET_PASSWORD=0123456789abcdef0123456789abcdef
           SUPPORT_EMAIL=support@example.com
-          NEXT_PUBLIC_BASE_URL=http://localhost:3000Ports mappings and networks
+          NEXT_PUBLIC_BASE_URL=http://localhost:3000
           EOF
           docker compose up -d --build --wait --wait-timeout 60
 
