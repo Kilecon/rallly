@@ -20,6 +20,32 @@
 
 Rallly is an open-source scheduling tool that helps you find the best date and time to meet. Create a poll with a few options, share the link, and let your participants vote on when they're available. No more back-and-forth emails.
 
+## Quick start
+
+**Prerequisites:** Docker with Compose; locally, Node.js 24, pnpm 12 and OpenSSL. On the VPS, Nginx must be connected to the external Docker network `proxy-network`, and the private registry must be accessible.
+
+**Local:** Copy `.env.example` to `.env`, `apps/web/.env.sample` to `apps/web/.env`, and `packages/database/.env.sample` to `packages/database/.env`. Fill in the secrets and connection settings as described in the [development guide](CONTRIBUTING.md).
+
+```bash
+pnpm install
+pnpm db:generate
+pnpm docker:up
+pnpm db:deploy
+pnpm dev
+```
+
+Open [https://web.rallly.localhost](https://web.rallly.localhost), or the URL printed by portless if you use a worktree.
+
+**VPS:** Fill in `.env` using [.env.example](.env.example), log in to the private registry, and configure Nginx to proxy to `rally:3000`. Then run:
+
+```bash
+docker compose -f docker-compose.vps.yml up -d rally rallly_db redis serverless-redis-http garage mailpit garage_init
+```
+
+Open the public Nginx URL configured in `NEXT_PUBLIC_BASE_URL`. See [Private registry deployment](#private-registry-deployment) for details.
+
+**Docker image build: TO BE ADDED TO MAIN AFTER THE HOTFIX CI.**
+
 ## ✨ Features
 
 - 📅 **Date & time polls** — Propose multiple options and find what works for everyone
