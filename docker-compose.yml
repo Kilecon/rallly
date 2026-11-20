@@ -7,7 +7,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql
     environment:
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
       - POSTGRES_DB=rallly
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -28,7 +28,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@rallly_db/rallly
+      - DATABASE_URL=postgres://postgres:${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}@rallly_db/rallly
     env_file:
       - path: apps/web/.env
         required: false
