@@ -1,9 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 import { config } from "dotenv";
 
-config({ path: ".env.test" });
-
 const ci = process.env.CI === "true";
+
+if (!ci) {
+  config({ path: ".env.test.local" });
+}
+config({ path: ".env.test" });
 
 const port = process.env.PORT || 3002;
 // Set webServer.url and use.baseURL with the location of the WebServer respecting the correct set port

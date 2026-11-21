@@ -39,9 +39,31 @@ The following instructions are for running the project locally for development.
    Copy the sample environment file and fill in the required values:
 
    ```bash
+   cp .env.example .env
    cp apps/web/.env.sample apps/web/.env
    cp packages/database/.env.sample packages/database/.env
    ```
+
+   Fill in the ignored root `.env` for Docker Compose. Generate independent
+   values with `openssl rand -hex 32` for `DATABASE_PASSWORD`,
+   `GARAGE_RPC_SECRET`, `S3_SECRET_ACCESS_KEY`, `SRH_TOKEN`,
+   `AUTHENTIK_PG_PASS`, `AUTHENTIK_SECRET_KEY`, and the application's
+   `SECRET_PASSWORD`. Generate `S3_ACCESS_KEY_ID` with
+   `printf 'GK'; openssl rand -hex 12`. Use the hex database password in the
+   URL so it does not need URL encoding.
+
+   In both `apps/web/.env` and `packages/database/.env`, set `DATABASE_URL` to
+   `postgres://postgres:<DATABASE_PASSWORD>@localhost:5450/rallly`, replacing
+   the placeholder with the root `.env` password. In `apps/web/.env`, copy
+   `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` from the root `.env` and set
+   `KV_REST_API_TOKEN` to the same value as `SRH_TOKEN`. For local Playwright
+   tests, create the ignored `apps/web/.env.test.local` with the same
+   `DATABASE_URL`; CI uses its own isolated test database.
+
+   Existing Postgres and Garage volumes retain their credentials: changing
+   environment variables alone does not rotate them. Preserve the existing
+   values when migrating, or rotate credentials in the services and update
+   all clients together. Never reset a volume just to change a password.
 
    See [configuration options](https://support.rallly.co/self-hosting/configuration-options) for a full list of available options.
 
@@ -60,6 +82,12 @@ The following instructions are for running the project locally for development.
    ```bash
    pnpm docker:up
    ```
+
+   The development service ports are bound to `127.0.0.1`, not public
+   interfaces. Local tools can still connect to Postgres, Mailpit, Garage and
+   the Redis HTTP adapter using the sample environment settings. Existing
+   `apps/web/.env` files using `0.0.0.0` as a service host should use
+   `127.0.0.1` instead.
 
    Next run the following command to setup the database:
 
