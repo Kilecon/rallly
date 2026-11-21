@@ -65,7 +65,7 @@ Once all services are running, open the public URL configured in `NEXT_PUBLIC_BA
 
 For more details about the private registry, deployment configuration, and GitHub Actions secrets, see [Private registry deployment](#private-registry-deployment).
 
-**Docker image build: TO BE ADDED TO MAIN AFTER THE HOTFIX CI.**
+**[Docker image build CI result](https://github.com/Kilecon/rallly/actions/runs/44895314675)**
 
 ## ✨ Features
 
