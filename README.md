@@ -22,7 +22,9 @@ Rallly is an open-source scheduling tool that helps you find the best date and t
 
 ## Quick start
 
-**Prerequisites:** Docker with Compose; locally, Node.js 24, pnpm 12 and OpenSSL. On the VPS, Nginx must be connected to the external Docker network `proxy-network`, and the private registry must be accessible.
+### Local
+
+**Prerequisites:** Docker with Compose; locally, Node.js 24, pnpm 12 and OpenSSL. 
 
 **Local:** Copy `.env.example` to `.env`, `apps/web/.env.sample` to `apps/web/.env`, and `packages/database/.env.sample` to `packages/database/.env`. Fill in the secrets and connection settings as described in the [development guide](CONTRIBUTING.md).
 
@@ -36,13 +38,32 @@ pnpm dev
 
 Open [https://web.rallly.localhost](https://web.rallly.localhost), or the URL printed by portless if you use a worktree.
 
-**VPS:** Fill in `.env` using [.env.example](.env.example), log in to the private registry, and configure Nginx to proxy to `rally:3000`. Then run:
+### Production
+
+You can deploy Rallly using the GitHub Actions `deploy` workflow available in this repository, which automatically builds the Docker image, pushes it to the private registry, and deploys it to your VPS when a version tag (`v*`) is pushed.
+
+Alternatively, you can deploy manually by following these steps:
+
+1. Create a `docker-compose.vps.yml` file on your VPS using the provided [Docker Compose file](./docker-compose.vps.yml).
+2. Configure the VPS `.env` file using [.env.example](.env.example), and fill in all required secrets and connection settings.
+3. If you are using a private registry, log in to it:
+
+   ```bash
+   docker login <REGISTRY_URL>
+   ```
+
+4. Make sure Nginx is connected to the external Docker network `proxy-network` and configured to forward requests to `rally:3000`.
+5. Ensure the VPS can access the private Docker registry and that all required services are configured correctly.
+
+Start the application and its dependencies:
 
 ```bash
 docker compose -f docker-compose.vps.yml up -d rally rallly_db redis serverless-redis-http garage mailpit garage_init
 ```
 
-Open the public Nginx URL configured in `NEXT_PUBLIC_BASE_URL`. See [Private registry deployment](#private-registry-deployment) for details.
+Once all services are running, open the public URL configured in `NEXT_PUBLIC_BASE_URL`.
+
+For more details about the private registry, deployment configuration, and GitHub Actions secrets, see [Private registry deployment](#private-registry-deployment).
 
 **Docker image build: TO BE ADDED TO MAIN AFTER THE HOTFIX CI.**
 

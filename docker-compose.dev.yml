@@ -9,8 +9,9 @@ services:
     environment:
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
       - POSTGRES_DB=rallly
+      - POSTGRES_USER=rallly
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U rallly"]
       interval: 5s
       timeout: 5s
       retries: 5
